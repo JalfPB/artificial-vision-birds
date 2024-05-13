@@ -1,7 +1,8 @@
 # TensorFlow y tf.keras
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.python.keras.layers import Dense, Layer, Embedding, Dropout, Input
+#from tensorflow.python.keras.layers import Dense, Layer, Embedding, Dropout, Input
+from tensorflow.keras.layers import Layer, Embedding, Dense, Dropout, Input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
@@ -294,6 +295,27 @@ train_generator = train_datagen.flow_from_dataframe(
     class_mode='categorical'  # use 'categorical' for multi-class problems
 )
 
+# Create a data generator for test data
+valid_datagen = ImageDataGenerator(
+#     rescale=1./255,
+    rotation_range=20,
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    vertical_flip=False,  # Typically not used for mammography
+    fill_mode='nearest'
+    )
+
+valid_generator = valid_datagen.flow_from_dataframe(
+    dataframe=valid_df,
+    x_col='paths',
+    y_col='labels',
+    target_size=(224, 224),  # adjust this to the size of your images
+    batch_size=8,
+    class_mode='categorical'  # use 'categorical' for multi-class problems
+)
+
 strategy = tf.distribute.MirroredStrategy()
 
 with strategy.scope():
@@ -320,3 +342,5 @@ with strategy.scope():
             )
     # history = model.fit(X_train, y_train, batch_size=16, epochs=100)
     history = model.fit(train_generator, epochs=5, validation_data=valid_generator)
+
+model.save('./modelos/modelo')
